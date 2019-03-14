@@ -6,12 +6,19 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,9 +27,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
+import net.kzn.onlineshopping.util.FileUploadUtility;
 import net.kzn.onlineshopping.validator.Addproductdetails;
+import net.kzn.onlineshopping.validator.ProductValidator;
 import net.kzn.shoppingbackend.dao.CategoryDAO;
 import net.kzn.shoppingbackend.dao.ProductDAO;
+import net.kzn.shoppingbackend.dto.AddCate;
 import net.kzn.shoppingbackend.dto.Category;
 import net.kzn.shoppingbackend.dto.Product;
 
@@ -38,6 +48,8 @@ public class ManagementController {
 	@Autowired
 	private CategoryDAO categoryDAO;		
 
+	TransportClient client;
+	
 	@RequestMapping("/product")
 	public ModelAndView manageProduct(@RequestParam(name="success",required=false)String success) {		
 
@@ -96,17 +108,17 @@ public class ManagementController {
 		//	addProduct.replaceAll("[{}\"]", "").split(",").forEach(string -> { String[] c = string.split(":"); map.put(c[0], c[1]); });
  		 
 		String theString = "{\"name\":\"m\",\"brand\":\"m\",\"description\":\"m\"}";
-		List<String> addProduct = Arrays.asList(theString.split("\\s*,\\s*"));
+		List<String> addProduct = Arrays.asList(add.split("\\s*,\\s*"));
 		Map<String, String> finishedMap = new HashMap<>();
  
 		for (String str : addProduct) {
 			String st = str.replaceAll("[{}\"]", "");
 			String[] c = st.split(":");
-			System.out.println(Arrays.toString(c));
-			finishedMap.put(c[0], c[1]);
+			//System.out.println(Arrays.toString(c));
+			map.put(c[0], c[1]);
 		}
  
-		System.out.println("finishedMap "+ finishedMap);
+		//System.out.println("finishedMap "+ map);
 		
 /*		map1.put("vinay", "1");
  		map1.put("v", "2");
@@ -120,16 +132,16 @@ public class ManagementController {
 		// {"name":"m", "brand":"m", "description":"m"}
 		// {"name" = "m", "brand" = "m", "description" = "m"}
 			
-		System.out.println("addProduct "+ add); 
- 		System.out.println("addProduct "+ addProduct);
-		System.out.println("addProduct "+ file.getOriginalFilename());
+		//System.out.println("addProduct "+ add); 
+ 		//System.out.println("addProduct "+ addProduct);
+		//System.out.println("addProduct "+ file.getOriginalFilename());
 		//System.out.println("map "+ theOtherString);
-		System.out.println("map "+ finishedMap.get("name"));
+	
   
 		Addproductdetails detail = new Addproductdetails();
-		/*Product mProduct = detail.addproduct(map, file);
-		   
-		System.out.println(mProduct);
+		Product mProduct = detail.addproduct(map, file);
+		//System.out.println("mProduct "+ mProduct);
+	 
 		// mandatory file upload check
 		if(mProduct.getId() == 0) {
 			new ProductValidator().validate(mProduct);
@@ -153,15 +165,17 @@ public class ManagementController {
 		 if(!mProduct.getFile().getOriginalFilename().equals("") ){
 			FileUploadUtility.uploadFile(request, mProduct.getFile(), mProduct.getCode()); 
 		 }
-*/		 
+ 	 
 		return "redirect:/manage/product?success=product";
 	}
 
 	
 	@RequestMapping(value = "/product/{id}/activation", method=RequestMethod.POST)
 	@ResponseBody
-	public String managePostProductActivation(@PathVariable int id) {		
-		Product product = productDAO.get(id);
+	public String managePostProductActivation(@PathVariable int id) {	
+
+		System.out.println("id == "+ id);
+ 		Product product = productDAO.get(id);
 		boolean isActive = product.isActive();
 		product.setActive(!isActive);
 		productDAO.update(product);		
@@ -170,14 +184,19 @@ public class ManagementController {
 			
 
 	@RequestMapping(value = "/category", method=RequestMethod.POST)
-	public String managePostCategory(@ModelAttribute("category") Category mCategory, HttpServletRequest request) {					
-		categoryDAO.add(mCategory);		
+	public String managePostCategory(
+			@RequestBody AddCate cate ,
+	 	HttpServletRequest request) {					
+		
+		System.out.println("cate "+ cate);
+		Category cat = new Category();
+		cat.setName(cate.getCategoryName());
+		cat.setDescription(cate.getCategoryDescription());
+		System.out.println("cate "+ cat);
+		categoryDAO.add(cat);		
 		return "redirect:" + request.getHeader("Referer") + "?success=category";
 	}
-			
-	
-	
-	 
+	  
  	@RequestMapping(value = "/categories")
 	public Map<String, Object>  modelCategories() {
 		Map<String, Object> categories = new HashMap<>();
@@ -185,12 +204,13 @@ public class ManagementController {
 		System.out.println("cat "+ categories);
 		return categories;
 	}
+ 	
 	
 	@ModelAttribute("category")
 	public Category modelCategory() {
 		return new Category();
 	}
-	
+	 
 }
  
 

@@ -23,6 +23,9 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +44,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 import net.kzn.onlineshopping.exception.ProductNotFoundException;
-import net.kzn.onlineshopping.handler.RegisterHandler;
-import net.kzn.onlineshopping.model.RegisterModel;
 import net.kzn.onlineshopping.pagin.Pagination;
 import net.kzn.onlineshopping.userinfo.Userinfosplit;
 import net.kzn.shoppingbackend.builder.SearchBuilder;
@@ -56,6 +57,7 @@ import net.kzn.shoppingbackend.dto.Product;
 import net.kzn.shoppingbackend.dto.User;
 import net.kzn.shoppingbackend.dto.Userinfo;
 import net.kzn.shoppingbackend.repository.JwtTokenRepository;
+import net.kzn.shoppingbackend.repository.ProductRepository;
 
 @RestController
 public class PageController {
@@ -84,7 +86,10 @@ public class PageController {
 	
 	@Autowired
 	private JwtTokenRepository jwtTokenRepository;
-  	
+
+	@Autowired
+	private ProductRepository allcategory;
+	
 	TransportClient client;
 
     public PageController(JwtTokenRepository jwtTokenRepository) {
@@ -550,8 +555,8 @@ public class PageController {
 	@ResponseBody
 	public Map<String, Object> Search(
 			@RequestParam(value = "searchTerm", required = false) String pSearchTerm,
-			@RequestParam(value = "txtMinAge", required = false) String txtMinAge,
-			@RequestParam(value = "txtMaxAge", required = false) String txtMaxAge,
+			@RequestParam(value = "SlideMin", required = false, defaultValue = "200") String txtMinAge,
+			@RequestParam(value = "SlideMax", required = false, defaultValue = "1000000") String txtMaxAge,
 			@RequestParam(value = "brand", required = false) String brandss, 
 			@RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
 			HttpServletRequest request, HttpServletResponse response) {
@@ -560,14 +565,21 @@ public class PageController {
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		Map<String, Object> mapproducts = new HashMap<String, Object>();
 		long total;
-
+		 
 		System.out.println("page = " + page);
-		System.out.println("brandss = " + brandss); 
-		
+		System.out.println("brandss = " + brandss);
+		 
+		List<String>selectbrands = new ArrayList<String>();
+		 
+		//selectbrands = brandss.replace("checkbox,", "");
 		List<String> brands = Arrays.asList(brandss.split("\\s*,\\s*"));
-		
-		// StringBuilder requestURL = new
-		// StringBuilder(request.getRequestURL().toString());
+		for(String brand: brands) {
+			selectbrands.add(brand);
+		}
+
+		selectbrands.remove("checkbox");
+		System.out.println("remove brandss = " + selectbrands);
+ 		
 		StringBuilder requestURL = new StringBuilder("search");
 		String queryString = request.getQueryString();
 
@@ -577,168 +589,91 @@ public class PageController {
 		String m1 = url.replaceAll("[&?]page.*?(?=&|\\?|$)", "");
 
 		System.out.println("requestURL m1 = " + m1);
-		// System.out.println("queryString = " + queryString);
-
-		// System.out.println("url = " + url);
-		// System.out.println("new url = " + requestURL.append('?').append(m1));
-
+ 
 		int from = 2 * (page - 1);
 
 		Map<String, Object> map = new HashMap<String, Object>();
-
-		if (txtMinAge == null && txtMaxAge == null) {
-			SearchResponse searchresponse = client
-					.prepareSearch("product")
-					.setTypes("product")
-					.setQuery(
-							QueryBuilders.queryStringQuery(pSearchTerm + "*")
-									.lenient(true).field("name"))
-					.setExplain(true).setFrom(from).setSize(2).execute()
-					.actionGet();
-
-			SearchHit[] results = searchresponse.getHits().getHits();
-
-			total = searchresponse.getHits().getTotalHits();
-
-			List<String> brandlist = new ArrayList<String>();
-			Set<String> set = new HashSet<String>();
-
-			System.out.println("Current results: " + results.length);
-			for (SearchHit hit : results) {
-				System.out.println("------------------------------");
-				// Map<String, Object> map = new HashMap<String, Object>();
-				map = hit.getSource();
-				String value = (String) map.get("brand");
-				set.add(value);
-				System.out.println("result=" + map);
-				list.add(map);
-				// return list;
-			}
-
-			for (String str : set) {
-				brandlist.add(str);
-			}
-
-			System.out.println("pSearchTerm=" + pSearchTerm);
-			System.out.println(txtMinAge);
-			System.out.println(txtMaxAge);
-
-			mv.addObject("searchTerm", pSearchTerm);
-			mapproducts.put("searchTerm",pSearchTerm); 
-			
-			mv.addObject("title", "Search");
-			mapproducts.put("title","Search");
-			
-			mv.addObject("searchResult", list);
-			mapproducts.put("searchResult",list);	
-			
-			mv.addObject("brandlist", brandlist);
-			mapproducts.put("brandlist",brandlist);
-			
-		 	// return mv;
-		} else if (brands == null) {
+		Map<String, Object> brandmap = new HashMap<String, Object>();
+  
+			System.out.println("========= else ============"); 
+			System.out.println("min---"+ txtMinAge + "max"+ txtMaxAge); 
 			int min = Integer.parseInt(txtMinAge);
 			int max = Integer.parseInt(txtMaxAge);
+			System.out.println("min---"+ min + "max"+ max); 
 
-			SearchResponse searchresponse = client
-					.prepareSearch("product")
-					.setTypes("product")
-					.setQuery(
-							QueryBuilders.queryStringQuery(pSearchTerm + "*")
-									.lenient(true).field("name"))
-					.setPostFilter(
-							QueryBuilders.rangeQuery("unit_price").from(min)
-									.to(max)).setFrom(from).setSize(2)
-					.setExplain(true).execute().actionGet();
-
-			SearchHit[] results = searchresponse.getHits().getHits();
-			total = searchresponse.getHits().getTotalHits();
-
-			List<String> brandlist = new ArrayList<String>();
-			Set<String> set = new HashSet<String>();
-
-			System.out.println("Current results: " + results.length);
-			for (SearchHit hit : results) {
-				System.out.println("------------------------------");
-				// Map<String, Object> map = new HashMap<String, Object>();
-				map = hit.getSource();
-				String value = (String) map.get("brand");
-				set.add(value);
-				System.out.println("result=" + map);
-				list.add(map);
-				// return list;
-			}
-
-			for (String str : set) {
-				brandlist.add(str);
-			}
-
-			System.out.println("pSearchTerm=" + pSearchTerm);
-			System.out.println(min);
-			System.out.println(max);
-
-			mv.addObject("searchTerm", pSearchTerm);
-			mapproducts.put("searchTerm",pSearchTerm);
-			
-			mv.addObject("title", "Search");
-			mapproducts.put("title", "Search");
-			
-			mv.addObject("searchResult", list);
-			mapproducts.put("searchResult",list);
-			
-			mv.addObject("brandlist", brandlist);
-			mapproducts.put("brandlist",brandlist);
-			
-			mv.addObject("userClickSearch", true);
-			  
-			// return mv;
-		} else {
-
-			int min = Integer.parseInt(txtMinAge);
-			int max = Integer.parseInt(txtMaxAge);
-
-			BoolQueryBuilder query = QueryBuilders.boolQuery();
-			for (String key : brands) {
-				query.must(QueryBuilders.matchQuery("brand", key));
-			}
-
+			// =========== pagination results ============
+			BoolQueryBuilder query1 = QueryBuilders.boolQuery();
+	 		
+			if(!selectbrands.isEmpty()) {
+	 			System.out.println("brands ====> " + selectbrands);
+				for (String key : brands) {
+					query1.should(QueryBuilders.matchQuery("brand", key));
+				}		
+	 		}
+				 
 			// search term
-			query.must(QueryBuilders.queryStringQuery(pSearchTerm + "*")
+			BoolQueryBuilder query2 = QueryBuilders.boolQuery();
+			query2.must(QueryBuilders.queryStringQuery(pSearchTerm + "*")
 					.lenient(true).field("name"));
 
 			// price range
-			query.filter(QueryBuilders.rangeQuery("unit_price").from(min)
+			BoolQueryBuilder query3 = QueryBuilders.boolQuery();
+			query3.filter(QueryBuilders.rangeQuery("unit_price").from(min)
 					.to(max));
 
+			BoolQueryBuilder query = QueryBuilders.boolQuery();
+
+			if(!selectbrands.isEmpty()) {
+ 			query.must(query1);
+			}
+			
+			query.must(query2);
+ 			query.must(query3);
+				
 			SearchResponse searchresponse = client.prepareSearch("product")
 					.setTypes("product").setQuery(query).setFrom(from)
 					.setSize(2).setExplain(true).execute().actionGet();
 
-			/*
-			 * SearchResponse searchresponse = client .prepareSearch("product")
-			 * .setTypes("product") .setQuery(
-			 * QueryBuilders.queryStringQuery(pSearchTerm + "*")
-			 * .lenient(true).field("name")) .setPostFilter(
-			 * QueryBuilders.rangeQuery("unit_price").from(min)
-			 * .to(max)).setQuery(query).setExplain(true)
-			 * .execute().actionGet();
-			 */
 			SearchHit[] results = searchresponse.getHits().getHits();
-			total = searchresponse.getHits().getTotalHits();
+ 			total = searchresponse.getHits().getTotalHits();
 
-			List<String> brandlist = new ArrayList<String>();
-			Set<String> set = new HashSet<String>();
-
-			System.out.println("Current results: " + results.length);
+ 			System.out.println("Current results: " + results.length);
+ 			
 			for (SearchHit hit : results) {
 				System.out.println("------------------------------");
-
-				map = hit.getSource();
-				String value = (String) map.get("brand");
-				set.add(value);
-				System.out.println("result=" + map);
+ 				map = hit.getSource();
+			 	System.out.println("result=" + map);
 				list.add(map);
 				// return list;
+			}
+ 			
+		//========= all results ==============
+		
+			BoolQueryBuilder brandquery = QueryBuilders.boolQuery();
+
+			// search term
+			brandquery.must(QueryBuilders.queryStringQuery(pSearchTerm + "*")
+					.lenient(true).field("name"));
+
+			// price range
+			brandquery.filter(QueryBuilders.rangeQuery("unit_price").from(min)
+					.to(max));
+
+			SearchResponse brandSearch = client.prepareSearch("product")
+					.setTypes("product").setQuery(brandquery).setExplain(true).execute().actionGet();
+
+ 			
+ 			SearchHit[] brandresults = brandSearch.getHits().getHits();
+  			 
+			List<String> brandlist = new ArrayList<String>();
+			Set<String> set = new HashSet<String>();
+ 			
+			System.out.println("brandresults results: " + brandresults.length);
+ 			
+			for (SearchHit hit : brandresults) {
+  				brandmap = hit.getSource();
+				String value = (String) brandmap.get("brand");
+				set.add(value);
 			}
 
 			for (String str : set) {
@@ -762,8 +697,8 @@ public class PageController {
 			mapproducts.put("brandlist",brandlist);
 			
 			mv.addObject("userClickSearch", true);
-		}
-
+		 
+ 		
 		List<Product> users = productDAO.getAllBrands();
 		PagedListHolder<Product> pagedListHolder = new PagedListHolder<>(users);
 		pagedListHolder.setPageSize(2);
@@ -952,5 +887,51 @@ public class PageController {
 
 		return modelAndView;
 	}
+	
+	@RequestMapping("/manage/all/product")
+	@ResponseBody
+	public List<Map<String, Object>> Search(
+ 			@RequestParam(value = "page", required = false, defaultValue = "1") int page,
+			HttpServletRequest request, HttpServletResponse response) {
+
+		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+ 		Map<String, Object> allproducts = new  HashMap<String, Object>();
+ 		 
+		System.out.println("page "+ page);
+		
+		int from = 2 * (page - 1);
+		String pSearchTerm = "ip"; 
+	
+		SortBuilder sb = SortBuilders.fieldSort("id")
+				.order(SortOrder.ASC);
+		
+		SearchResponse searchresponse = client
+				.prepareSearch("product")
+				.setTypes("product")
+				.setQuery(
+						QueryBuilders.matchAllQuery())
+				.addSort(sb)
+				.setExplain(true).setFrom(from).setSize(2).execute()
+				.actionGet();
+
+		SearchHit[] results = searchresponse.getHits().getHits();
+
+		long total = searchresponse.getHits().getTotalHits();
+  
+		System.out.println("Current results: " + results.length);
+		for (SearchHit hit : results) {
+			System.out.println("------------------------------");
+			// Map<String, Object> map = new HashMap<String, Object>();
+			
+			allproducts = hit.getSource();
+		 
+			list.add(allproducts);
+			 
+			System.out.println("result == " + allproducts);
+		 }
+		 
+		return list;
+	}
+
 
 }

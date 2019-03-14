@@ -11,38 +11,38 @@ public class Addproductdetails {
 
 	public Product addproduct(Map<String, String> prod , MultipartFile file) {
 		
-		System.out.println("prod "+ prod);
-		System.out.println("1");
+		//System.out.println("prod "+ prod);
+		//System.out.println("1");
 		Product product = new Product();
-		System.out.println("2");
+		//System.out.println("2");
 		//String imageDataBytes = prod.getFile();
 		
 	//	byte[] imageByte=Base64.decodeBase64(imageDataBytes);
 
 	//	MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
-		System.out.println("3");
+		//System.out.println("3");
  		//product.setCode((String) prod.get("Code"));
- 		System.out.println("4");
-		product.setName((String)prod.get("name"));
-		System.out.println("5");
-		product.setBrand((String)prod.get("brand"));
-		System.out.println("6" + prod.get("description"));
-		product.setDescription((String)prod.get("description"));
-		System.out.println("7" +   prod.get("unitPrice"));
+ 		//System.out.println("4");
+		product.setName(prod.get("name"));
+		//System.out.println("5");
+		product.setBrand(prod.get("brand"));
+		//System.out.println("6" + prod.get("description"));
+		product.setDescription(prod.get("description"));
+		//System.out.println("7" +   prod.get("unitPrice"));
 		product.setUnitPrice( Double.parseDouble( (String) prod.get("unitPrice")));
-		System.out.println("8");
+		//System.out.println("8");
 		product.setQuantity(Integer.parseInt((String) prod.get("quantity")));
-		System.out.println("9");
+		//System.out.println("9");
 		product.setCategoryId( Integer.parseInt((String) prod.get("categoryId")));
-		System.out.println("10");
+		//System.out.println("10");
 		product.setSupplierId( Integer.parseInt((String) prod.get("supplierId")) );
-		System.out.println("11");
-		product.setPurchases( Integer.parseInt((String) prod.get("purchases")) );
-		System.out.println("12");
-		product.setViews( Integer.parseInt((String) prod.get("views")) );
-		System.out.println("13");
+		//System.out.println("11");
+		product.setPurchases(12);
+		//System.out.println("12");
+		product.setViews( 12 );
+		//System.out.println("13");
 		product.setFile(file);
-		System.out.println("14");
+		//System.out.println("14");
 		return product;
 		
 
