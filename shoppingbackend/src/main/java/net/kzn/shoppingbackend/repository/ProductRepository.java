@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import net.kzn.shoppingbackend.dto.Product;
 
- 
+/*  product*/ 
 @Repository
 public interface ProductRepository extends CrudRepository<Product, Integer> {
 

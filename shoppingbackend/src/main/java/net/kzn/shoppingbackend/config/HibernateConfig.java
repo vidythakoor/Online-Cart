@@ -84,7 +84,7 @@ public class HibernateConfig {
         return hibernateProperties;
     }
 
-
+/*security bean*/
 	@Bean
 	public BCryptPasswordEncoder bCryptPasswordEncoder() {
 	    return new BCryptPasswordEncoder();
