@@ -30,7 +30,9 @@ public class AddProduct implements Serializable {
  	private String description;
  	private double unitPrice;
 	private int quantity;
- 	private boolean active;
+	private int rating;
+ 	
+	private boolean active;
  	@JsonIgnore
 	private int categoryId;
 	@Column(name = "supplier_id")
@@ -90,6 +92,13 @@ public class AddProduct implements Serializable {
 	public void setQuantity(int quantity) {
 		this.quantity = quantity;
 	}
+	public int getRating() {
+		return rating;
+	}
+
+	public void setRating(int rating) {
+		this.rating = rating;
+	}
 	public boolean isActive() {
 		return active;
 	}
@@ -127,7 +136,7 @@ public class AddProduct implements Serializable {
 
 	
 	
-	public AddProduct(int id, String code, String name, String brand, String description, double unitPrice, int quantity,
+	public AddProduct(int id, String code, String name, String brand, String description, double unitPrice, int quantity,int rating,
 			boolean active, int categoryId, int supplierId, int purchases, int views) {
 		super();
 		this.id = id;
@@ -137,6 +146,7 @@ public class AddProduct implements Serializable {
 		this.description = description;
 		this.unitPrice = unitPrice;
 		this.quantity = quantity;
+		this.rating = rating;
 		this.active = active;
 		this.categoryId = categoryId;
 		this.supplierId = supplierId;
@@ -144,14 +154,16 @@ public class AddProduct implements Serializable {
 		this.views = views; 
 	}
 
+
 	@Override
 	public String toString() {
 		return "AddProduct [id=" + id + ", code=" + code + ", name=" + name + ", brand=" + brand + ", description="
-				+ description + ", unitPrice=" + unitPrice + ", quantity=" + quantity + ", active=" + active
-				+ ", categoryId=" + categoryId + ", supplierId=" + supplierId + ", purchases=" + purchases + ", views="
-				+ views +"]";
+				+ description + ", unitPrice=" + unitPrice + ", quantity=" + quantity + ", rating=" + rating
+				+ ", active=" + active + ", categoryId=" + categoryId + ", supplierId=" + supplierId + ", purchases="
+				+ purchases + ", views=" + views + "]";
 	}
 
+	
 	// toString for debugging
 	
 }
