@@ -1,5 +1,6 @@
 package net.kzn.onlineshopping.controller;
 
+import java.io.Console;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -145,9 +146,11 @@ public class PageController {
  			Category category2 = null;
  			category2 = categoryDAO.get(2);
  			mv.addObject("title", category2.getName());
+ 			//System.out.println("cat name" + category2 );
  			mv.addObject("viewproducts2",
  					productDAO.listActiveProductsByCategory(2));
-
+ 			//System.out.println("cat name" + productDAO.listActiveProductsByCategory(2) );
+ 			System.out.println("cat name bcjsbcjsncknkjcnks" );
  			map.put("title", category2.getName());
  			map.put("viewproducts2",
  					productDAO.listActiveProductsByCategory(2));
@@ -162,14 +165,27 @@ public class PageController {
  			map.put("title", category2.getName());
  			map.put("viewproducts3",
  					productDAO.listActiveProductsByCategory(3));
+
+ 			// passing the products of category 4
+ 			Category category4 = null;
+ 			category4 = categoryDAO.get(10);
+ 			mv.addObject("title", category4.getName());
+ 			System.out.println("cat name" + category4 );
+ 			mv.addObject("viewproducts4",
+ 					productDAO.listActiveProductsByCategory(10));
  			
- 			
+ 			map.put("title", category4.getName());
+ 			System.out.println("heloo cat4");
+ 			map.put("viewproducts4",
+ 					productDAO.listActiveProductsByCategory(10));
+
+ 			System.out.println("cat name" + productDAO.listActiveProductsByCategory(10) );
  			// passing the list of categories
  			mv.addObject("categories", categoryDAO.list());
  			map.put("categories", categoryDAO.list());
  			
  			if (logout != null) {
- 				mv.addObject("message", "You have successfully logged out!");
+ 				mv.addObject("message", "You have successfully logged out!!");
  				map.put("message", "You have successfully logged out!");
  			}
 
@@ -240,11 +256,11 @@ public class PageController {
 
 	@RequestMapping(value = "/show/all/products")
 	public List<Product> showAllProducts() {
-
 		//ModelAndView mv = new ModelAndView("page");
 		List<Product> list = productDAO.list();
 		for(Product s:list) {
-			System.out.println("list = "+ s);
+			//System.out.println("list = "+ s);
+			//System.out.println("hiiii hellllo");
 		}		
 		/*mv.addObject("title", "All Products");
 
@@ -255,12 +271,31 @@ public class PageController {
 */		return list;
 	}
 
+	@RequestMapping(value = "/show/all/categories")
+	public List<Category> showAllCategories() {
+		//ModelAndView mv = new ModelAndView("page");
+		List<Category> list = categoryDAO.list();
+		for(Category s:list) {
+			System.out.println("list = "+ s);
+			//System.out.println("hiiii category");
+		}		
+		/*mv.addObject("title", "All Products");
+
+		// passing the list of categories
+		mv.addObject("categories", categoryDAO.list());
+		mv.addObject("productlist", productDAO.list());
+		mv.addObject("userClickAllProducts", true);
+*/		return list;
+	}
+
+	
 	@RequestMapping(value = "/show/category/{id}/products")
 	public Map<String, Object> showCategoryProducts(@PathVariable("id") int id) {
 		ModelAndView mv = new ModelAndView("page");
 		Map<String, Object> map = new HashMap<String, Object>();
  		// categoryDAO to fetch a single category
 		Category category = null;
+		System.out.println("hiiii category");
 
 		category = categoryDAO.get(id);
 		map.put("title", category.getName());
@@ -308,6 +343,7 @@ public class PageController {
 		
 		mv.addObject("userClickShowProduct", true);
 		System.out.println("show/id product---");	
+		System.out.println("in cat idddd");
 		return productmap;
 
 	}
@@ -746,8 +782,8 @@ public class PageController {
 
 	@RequestMapping(value = "/searchAutocomplete")
 	@ResponseBody
-	public List<String> plantNamesAutocomplete(
-			@RequestParam(value = "term", required = false) String pSearchTerm) {
+	public List<Map<String, Object>> plantNamesAutocomplete(
+			@RequestParam(value = "searchTerm", required = false) String pSearchTerm) {
 		// List<Product> suggestions = new ArrayList<Product>();
 
 		System.out.println("search " + pSearchTerm);
@@ -763,7 +799,7 @@ public class PageController {
 		SearchHit[] results = searchresponse.getHits().getHits();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		Map<String, Object> map = new HashMap<String, Object>();
-
+		
 		System.out.println("Current results: " + results.length);
 		for (SearchHit hit : results) {
 			System.out.println("------------------------------");
@@ -772,15 +808,18 @@ public class PageController {
 			System.out.println("result=" + map.toString());
 			list.add(map);
 			list.toString();
-			// return list;
-		}
+ 		}
 
-		List<String> listauto2 = new ArrayList<String>();
+		List<Map<String, Object>> listauto2 = new ArrayList<Map<String, Object>>();
 
 		for (Map<String, Object> hit : list) {
-			String value = (String) hit.get("name");
+			String name = (String) hit.get("name");
+			String code = (String) hit.get("code");
+			Map<String, Object> automap = new HashMap<String, Object>();
+			automap.put("name", hit.get("name"));
+			automap.put("code", hit.get("code"));
 			// listauto2.add(hit.values().toString());
-			listauto2.add(value);
+			listauto2.add(automap);
 		}
 		return listauto2;
 	}
