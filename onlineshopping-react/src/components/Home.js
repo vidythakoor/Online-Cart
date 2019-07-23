@@ -105,7 +105,7 @@ class Home extends Component {
           </div>
         </div>
 
-                    {/* Laptop start */}
+                    {/* Laptop start!!!! */}
 
             <div className="row mt-5 bg-white rounded">
               <div className="col-2 mt-2 bg-white rounded">
