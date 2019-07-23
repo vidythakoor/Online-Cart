@@ -34,7 +34,7 @@ class CategoryProducts extends React.Component {
     $('#SlideMin').val(localStorage.getItem('slideMin'));
     $('#SlideMax').val(localStorage.getItem('slideMax')); 
     
-    //checkedbox
+    //checkedbox!!!!
     
    $('.checksave').change(function() {
     console.log("hellloooo")
